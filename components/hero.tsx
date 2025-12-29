@@ -1,65 +1,32 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ChevronDown } from "lucide-react"
 
-// Sample media items - mix of images and videos
 const heroMedia = [
   { type: "image", src: "/luxury-nightclub-interior.jpg" },
+  { type: "image", src: "/champagne-sparklers-vip.jpg" },
+  { type: "image", src: "/luxury-fashion-party.jpg" },
   {
     type: "video",
-    src: "https://assets.mixkit.co/videos/preview/mixkit-club-scene-with-people-dancing-under-lasers-4235-large.mp4",
+    src: "https://v0.blob.com/nightlife-sample-video.mp4", // Replace with actual video URL
   },
-  { type: "image", src: "/champagne-sparklers-vip.jpg" },
-  { type: "video", src: "https://assets.mixkit.co/videos/preview/mixkit-dj-performing-in-a-nightclub-4232-large.mp4" },
 ]
-
-const shuffleArray = <T,>(array: T[]): T[] => {
-  const shuffled = [...array]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
-  return shuffled
-}
 
 export function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [shuffledMedia, setShuffledMedia] = useState<{ type: string; src: string }[]>([])
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [mediaItems] = useState(heroMedia)
 
   useEffect(() => {
-    setShuffledMedia(shuffleArray(heroMedia))
-  }, [])
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % mediaItems.length)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [currentIndex, mediaItems])
 
-  useEffect(() => {
-    if (shuffledMedia.length === 0) return
-
-    const currentMedia = shuffledMedia[currentIndex]
-
-    if (currentMedia?.type === "video") {
-      const video = videoRef.current
-      if (video) {
-        const handleEnded = () => {
-          setCurrentIndex((prev) => (prev + 1) % shuffledMedia.length)
-        }
-        video.addEventListener("ended", handleEnded)
-        video.play().catch((e) => console.log("[v0] Video play prevented", e))
-        return () => video.removeEventListener("ended", handleEnded)
-      }
-    } else {
-      const timer = setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % shuffledMedia.length)
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [currentIndex, shuffledMedia])
-
-  if (shuffledMedia.length === 0) return <div className="h-screen bg-black" />
-
-  const currentMedia = shuffledMedia[currentIndex]
+  const currentMedia = mediaItems[currentIndex]
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -72,29 +39,20 @@ export function Hero() {
           transition={{ duration: 1 }}
           className="w-full h-full"
         >
-          {currentMedia.type === "image" ? (
+          {currentMedia.type === "video" ? (
+            <video src={currentMedia.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+          ) : (
             <div
               className="w-full h-full bg-cover bg-center"
               style={{ backgroundImage: `url('${currentMedia.src}')` }}
             />
-          ) : (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              muted
-              playsInline
-              key={currentMedia.src}
-            >
-              <source src={currentMedia.src} type="video/mp4" />
-            </video>
           )}
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
       </div>
 
       <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {shuffledMedia.map((_, i) => (
+        {mediaItems.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrentIndex(i)}
