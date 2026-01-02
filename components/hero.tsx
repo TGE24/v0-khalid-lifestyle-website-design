@@ -4,22 +4,23 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ChevronDown } from "lucide-react"
-
-const heroMedia = [
-  { type: "image", src: "/luxury-nightclub-interior.jpg" },
-  { type: "image", src: "/champagne-sparklers-vip.jpg" },
-  { type: "image", src: "/luxury-fashion-party.jpg" },
-  {
-    type: "video",
-    src: "https://v0.blob.com/nightlife-sample-video.mp4", // Replace with actual video URL
-  },
-]
+import { getHeroMedia } from "@/lib/events"
 
 export function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [mediaItems] = useState(heroMedia)
+  const [mediaItems, setMediaItems] = useState<{ type: "image" | "video"; src: string }[]>([])
 
   useEffect(() => {
+    async function fetchMedia() {
+      const media = await getHeroMedia()
+      setMediaItems(media)
+    }
+    fetchMedia()
+  }, [])
+
+  useEffect(() => {
+    if (mediaItems.length === 0) return
+
     const timer = setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % mediaItems.length)
     }, 5000)
@@ -27,6 +28,10 @@ export function Hero() {
   }, [currentIndex, mediaItems])
 
   const currentMedia = mediaItems[currentIndex]
+
+  if (!currentMedia) {
+    return null
+  }
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">

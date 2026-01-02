@@ -3,7 +3,9 @@
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { pastEvents } from "@/lib/events"
+import { useEffect, useState } from "react"
+import { getEventById } from "@/lib/firestore-services"
+import type { PastEvent } from "@/lib/events"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { Navbar } from "@/components/navbar"
@@ -12,7 +14,27 @@ import { Footer } from "@/components/footer"
 export default function EventGalleryPage() {
   const params = useParams()
   const router = useRouter()
-  const event = pastEvents.find((e) => e.id === params.event)
+  const [event, setEvent] = useState<PastEvent | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchEvent() {
+      if (!params.event) return
+      const eventId = params.event as string
+      const foundEvent = await getEventById(eventId)
+      setEvent(foundEvent)
+      setIsLoading(false)
+    }
+    fetchEvent()
+  }, [params.event])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-gold uppercase tracking-widest text-xs">Loading experience...</p>
+      </div>
+    )
+  }
 
   if (!event) return null
 
@@ -54,7 +76,7 @@ export default function EventGalleryPage() {
                     width={800}
                     height={item.aspect === "portrait" ? 1200 : item.aspect === "landscape" ? 450 : 800}
                     className="w-full object-cover transition-all duration-700 group-hover:scale-110"
-                    unoptimized={item.src.startsWith("https") || item.src.includes("placeholder")}
+                    unoptimized={item.src.startsWith("http") || item.src.includes("placeholder")}
                   />
                 ) : (
                   <video

@@ -14,7 +14,7 @@ export interface PastEvent {
   items: GalleryItem[]
 }
 
-export const pastEvents: PastEvent[] = [
+const pastEvents: PastEvent[] = [
   {
     id: "london-fashion-week-2025",
     title: "London Fashion Week Afterparty",
@@ -58,3 +58,46 @@ export const pastEvents: PastEvent[] = [
     })),
   },
 ]
+
+import { getAllEventsFromFirestore } from "./firestore-services"
+
+export async function getAllEvents(): Promise<PastEvent[]> {
+  // Fetch from Firestore
+  const firestoreEvents = await getAllEventsFromFirestore()
+
+  // If no Firestore events, return demo events
+  if (firestoreEvents.length === 0) {
+    return pastEvents
+  }
+
+  return firestoreEvents
+}
+
+export async function getHeroMedia() {
+  const allEvents = await getAllEvents()
+  const allMedia: { type: "image" | "video"; src: string }[] = []
+
+  // Get first 3 images from each event
+  allEvents.forEach((event) => {
+    const images = event.items.filter((item) => item.type === "image").slice(0, 3)
+    images.forEach((img) => allMedia.push({ type: "image", src: img.src }))
+  })
+
+  // Get videos from each event
+  allEvents.forEach((event) => {
+    const videos = event.items.filter((item) => item.type === "video")
+    videos.forEach((vid) => allMedia.push({ type: "video", src: vid.src }))
+  })
+
+  // Add default media if no custom media exists
+  if (allMedia.length === 0) {
+    return [
+      { type: "image", src: "/luxury-nightclub-interior.jpg" },
+      { type: "image", src: "/champagne-sparklers-vip.jpg" },
+      { type: "image", src: "/luxury-fashion-party.jpg" },
+      { type: "video", src: "https://v0.blob.com/nightlife-sample-video.mp4" },
+    ]
+  }
+
+  return allMedia
+}

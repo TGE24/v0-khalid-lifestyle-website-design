@@ -1,8 +1,25 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { pastEvents } from "@/lib/events"
+import type { PastEvent } from "@/lib/events"
+import { getAllEventsFromFirestore } from "@/lib/firestore-services"
 
 export function Gallery() {
+  const [events, setEvents] = useState<PastEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchEvents() {
+      const fetchedEvents = await getAllEventsFromFirestore()
+      setEvents(fetchedEvents)
+      setIsLoading(false)
+    }
+
+    fetchEvents()
+  }, [])
+
   return (
     <section id="gallery" className="py-24 px-6 md:px-12 bg-black">
       <div className="max-w-7xl mx-auto">
@@ -15,28 +32,34 @@ export function Gallery() {
           <div className="w-24 h-[1px] bg-white/20 mx-auto mt-12" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-          {pastEvents.map((event) => (
-            <Link key={event.id} href={`/gallery/${event.id}`} className="group block">
-              <div className="relative aspect-[4/5] overflow-hidden border border-white/5 bg-white/5 mb-6">
-                <Image
-                  src={event.thumbnail || "/placeholder.svg"}
-                  alt={event.title}
-                  fill
-                  className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  <p className="text-gold text-[10px] uppercase tracking-[0.3em] mb-2">{event.date}</p>
-                  <h3 className="text-2xl font-serif text-white mb-2">{event.title}</h3>
-                  <p className="text-white/40 text-[10px] uppercase tracking-widest group-hover:text-white transition-colors">
-                    Explore Gallery — {event.items.length} Photos
-                  </p>
+        {isLoading ? (
+          <p className="text-center text-white/60">Loading events...</p>
+        ) : events.length === 0 ? (
+          <p className="text-center text-white/60">No events available yet</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {events.map((event) => (
+              <Link key={event.id} href={`/gallery/${event.id}`} className="group block">
+                <div className="relative aspect-[4/5] overflow-hidden border border-white/5 bg-white/5 mb-6">
+                  <Image
+                    src={event.thumbnail || "/placeholder.svg"}
+                    alt={event.title}
+                    fill
+                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
+                  <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <p className="text-gold text-[10px] uppercase tracking-[0.3em] mb-2">{event.date}</p>
+                    <h3 className="text-2xl font-serif text-white mb-2">{event.title}</h3>
+                    <p className="text-white/40 text-[10px] uppercase tracking-widest group-hover:text-white transition-colors">
+                      Explore Gallery — {event.items.length} Photos
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
